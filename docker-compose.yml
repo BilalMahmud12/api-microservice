@@ -41,8 +41,9 @@ services:
     container_name: api-microservice-test-db
     restart: always
     environment:
+      APP_ENV: testing
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_DATABASE: api_microservice_test
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
