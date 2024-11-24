@@ -11,7 +11,7 @@ class AccountRepository implements AccountRepositoryInterface
         //
     }
 
-    public function deposite(int $id, int $funds)
+    public function deposit(int $id, int $funds)
     {
         //
     }

@@ -6,7 +6,7 @@ interface AccountRepositoryInterface
 {
     public function getBalance(int $id);
 
-    public function deposite(int $id, int $funds);
+    public function deposit(int $id, int $funds);
 
     public function withdraw(int $id, int $funds);
 
