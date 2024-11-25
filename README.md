@@ -1,66 +1,226 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Account Management and Auditing API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Features
 
-## About Laravel
+- **Customer Management**: CRUD operations for customer data.
+- **Account Transactions**: Deposit, withdraw, and transfer funds between customer accounts.
+- **Auditing**: Audit individual or all accounts to ensure account balances are correct.
+- **Security**: API token-based security to secure endpoints.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Technology Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Language**: PHP 8.2
+- **Framework**: Laravel 11.3
+- **Database**: MariaDB
+- **Other Tools**: Docker for containerization, Composer for dependency management, PHPUnit for testing
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Installation and Setup
 
-## Learning Laravel
+To run this project locally, you will need Docker installed. The project uses Docker containers to ensure easy setup and consistent environments.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Step-by-Step Setup
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+1. **Clone the Repository**
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+   ```bash
+   git clone https://github.com/BilalMahmud12/api-microservice.git
+   cd api-microservice
+   ```
 
-## Laravel Sponsors
+2. **Create Environment File**
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+   ```bash
+   cp .env.example .env
+   ```
 
-### Premium Partners
+   Update the `.env` file to match your local environment setup.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+3. **Build and Start Containers**
 
-## Contributing
+   ```bash
+   docker-compose build
+   docker-compose up -d
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. **Run Migrations**
 
-## Code of Conduct
+   Run the following command to set up the database:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+   ```bash
+   docker-compose exec app php artisan migrate
+   ```
 
-## Security Vulnerabilities
+5. **Generate API Token**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+   Set an API token in your `.env` file:
 
-## License
+   ```env
+   API_TOKEN=6f9d1e28-75b9-4b8a-90a3-04fa6e31c1b2
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Architecture Overview
+
+This project follows a multi-layered architecture, segregating responsibilities across various layers:
+
+- **Controllers**: Handle HTTP requests, input validation, and pass data to service layers.
+- **Services**: Contain business logic, interacting with repositories to handle operations and DB transactions.
+- **Repositories**: Interact with the database using Eloquent models, providing an abstraction layer for data retrieval and manipulation.
+- **Models**: Represent the data structure in the application.
+- **Middleware**: Custom middleware used to verify API tokens for authorized access.
+
+The main layers interact as follows:
+
+1. **Controller**: Receives requests, validates inputs, then delegates to the service.
+2. **Service**: Handles business logic and ensures atomic operations and implementation of ACID principles using MariaDB database transactions.
+3. **Repository**: Responsible for direct database interactions.
+4. **Validator**: Handles input validation.
+
+### Account Operations Flow
+
+1. **Deposit/Withdraw**:
+
+   - Controller validates the request.
+   - Service handles transaction operations.
+   - Repository interacts with the database for data updates.
+
+2. **Transfer**:
+
+   - Service ensures funds are deducted and added atomically from the accounts involved.
+
+## API Endpoints
+
+Here is a list of the available API endpoints with their descriptions:
+
+### Customer Endpoints
+
+- **GET /api/v1/customers**: Retrieve all customers (paginated).
+
+  **Response**:
+
+  ```json
+  {
+    "current_page": 1,
+    "data": [
+      {
+        "id": 1,
+        "name": "John",
+        "surname": "Doe",
+        "balance": 100.00,
+        "created_at": "2024-11-25T10:00:00.000000Z",
+        "updated_at": "2024-11-25T10:00:00.000000Z"
+      }
+    ],
+    "total": 50
+  }
+  ```
+
+- **POST /api/v1/customers**: Create a new customer.
+
+  **Request Body**:
+
+  ```json
+  {
+    "name": "Jane",
+    "surname": "Doe"
+  }
+  ```
+
+  **Response**:
+
+  ```json
+  {
+    "name": "Jane",
+    "surname": "Doe",
+    "balance": 0.0
+  }
+  ```
+
+- **GET /api/v1/customers/{id}**: Retrieve a customer by ID.
+
+- **PUT /api/v1/customers/{id}**: Update a customer's information.
+
+- **DELETE /api/v1/customers/{id}**: Delete a customer.
+
+### Account Endpoints
+
+- **GET /api/v1/accounts/{id}**: Retrieve the balance of a specific customer.
+
+  **Response**:
+
+  ```json
+  {
+    "balance": 200.50
+  }
+  ```
+
+- **POST /api/v1/accounts/{id}/deposit**: Deposit funds to an account.
+
+  **Request Body**:
+
+  ```json
+  {
+    "funds": 50.00
+  }
+  ```
+
+- **POST /api/v1/accounts/{id}/withdraw**: Withdraw funds from an account.
+
+- **POST /api/v1/accounts/transfer**: Transfer funds between accounts.
+
+  **Request Body**:
+
+  ```json
+  {
+    "from": 1,
+    "to": 2,
+    "funds": 25.00
+  }
+  ```
+
+### Audit Endpoints
+
+- **POST /api/v1/audit/all**: Audit all customer accounts.
+
+  **Response**:
+
+  ```json
+  {
+    "message": "Audit completed",
+    "results": {
+      "1": {
+        "status": "success",
+        "balance": 150.00
+      },
+      "2": {
+        "status": "failed",
+        "error": "Customer not found"
+      }
+    }
+  }
+  ```
+
+- **POST /api/v1/audit/{id}**: Audit a single customer account.
+
+## Security
+
+All endpoints are secured using a static API token defined in the `.env` file. The token should be provided in the request headers as follows:
+
+```
+Authorization: Bearer YOUR_GENERATED_TOKEN
+```
+
+Requests without the correct token will receive a `401 Unauthorized` response.
+
+## Testing
+
+Unit and feature tests are included for all major functionalities using PHPUnit. To run the tests, use the following command:
+
+```bash
+docker-compose exec app php artisan test
+```
+
+Tests include:
+
+- Customer management (CRUD operations)
+- Account transactions (deposit, withdraw, transfer)
+- Auditing functionality
