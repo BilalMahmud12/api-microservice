@@ -1,4 +1,4 @@
-# Laravel Account Management and Auditing API
+# PHP Microservice API - for Finance Operations and Audit
 
 ## Features
 
