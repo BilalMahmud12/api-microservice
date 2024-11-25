@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use App\Models\Customer;
 
@@ -10,11 +11,8 @@ class CustomerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-    * Test retrieving all customers with default pagination.
-    */
-
-    public function test_get_all_customers_with_default_pagination()
+    #[Test]
+    public function it_gets_all_customers_with_default_pagination()
     {
         Customer::factory()->count(15)->create();
 
@@ -46,10 +44,8 @@ class CustomerTest extends TestCase
         $this->assertEquals(15, $responseData['total']);
     }
 
-    /**
-     * Test retrieving all customers with custom pagination.
-     */
-    public function test_get_all_customers_with_custom_pagination()
+    #[Test]
+    public function it_gets_all_customers_with_custom_pagination()
     {
         Customer::factory()->count(50)->create();
 
@@ -69,10 +65,8 @@ class CustomerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test retrieving all customers with invalid pagination.
-     */
-    public function test_get_all_customers_with_invalid_pagination()
+    #[Test]
+    public function it_gets_all_customers_with_invalid_pagination()
     {
         $response = $this->get('/api/v1/customers?page=abc&per_page=-5');
         $response->assertStatus(422);
@@ -82,20 +76,16 @@ class CustomerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test retrieving customers when no customers exist, should return []
-     */
-    public function test_get_all_customers_on_empty_database()
+    #[Test]
+    public function it_gets_all_customers_on_empty_database()
     {
         $response = $this->get('/api/v1/customers');
         $response->assertStatus(200);
         $response->assertJson(['data' => []]);
     }
 
-    /**
-     * Test creating a new customer.
-     */
-    public function test_create_customer()
+    #[Test]
+    public function it_should_create_customer()
     {
         $response = $this->post('/api/v1/customers', [
             'name' => 'John',
@@ -110,10 +100,8 @@ class CustomerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test creating a customer with missing name, should return validation error
-     */
-    public function test_create_customer_with_missing_name()
+    #[Test]
+    public function it_should_fail_on_create_customer_with_missing_name()
     {
         $response = $this->post('/api/v1/customers', [
             'surname' => 'Doe'
@@ -125,10 +113,8 @@ class CustomerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test creating a customer with balance field (which should be prohibited).
-     */
-    public function test_create_customer_with_balance_field()
+    #[Test]
+    public function it_should_fail_on_create_customer_with_balance_field()
     {
         $response = $this->post('/api/v1/customers', [
             'name' => 'John',
@@ -142,10 +128,8 @@ class CustomerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test retrieving a specific customer by valid ID.
-     */
-    public function test_get_customer_by_id()
+    #[Test]
+    public function it_gets_customer_by_id()
     {
         $customer = Customer::factory()->create();
 
@@ -158,20 +142,16 @@ class CustomerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test retrieving a customer by non-existing ID.
-     */
-    public function test_get_customer_by_non_existing_id()
+    #[Test]
+    public function it_gets_customer_by_non_existing_id()
     {
         $response = $this->get('/api/v1/customers/99999');
         $response->assertStatus(404);
         $response->assertJson(['error' => 'Customer not found']);
     }
 
-    /**
-     * Test updating a customer with valid data.
-     */
-    public function test_update_customer()
+    #[Test]
+    public function it_updates_customer()
     {
         $customer = Customer::factory()->create();
 
@@ -187,10 +167,8 @@ class CustomerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test updating a customer balance
-     */
-    public function test_update_customer_balance()
+    #[Test]
+    public function it_fails_on_update_customer_balance()
     {
         $customer = Customer::factory()->create();
 
@@ -204,10 +182,8 @@ class CustomerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test updating a customer with an empty request body.
-     */
-    public function test_update_customer_with_empty_request_body()
+    #[Test]
+    public function it_fails_on_update_customer_with_empty_request_body()
     {
         $customer = Customer::factory()->create();
 
@@ -219,10 +195,8 @@ class CustomerTest extends TestCase
         ]);
     }
 
-    /**
-     * Test deleting a customer by valid ID.
-     */
-    public function test_delete_customer()
+    #[Test]
+    public function it_deletes_customer()
     {
         $customer = Customer::factory()->create();
 
@@ -231,10 +205,8 @@ class CustomerTest extends TestCase
         $response->assertJson(['success' => true]);
     }
 
-    /**
-     * Test deleting a customer by non-existing ID.
-     */
-    public function test_delete_customer_with_non_existing_id()
+    #[Test]
+    public function it_fails_on_delete_customer_with_non_existing_id()
     {
         $response = $this->delete('/api/v1/customers/99999');
         $response->assertStatus(404);
