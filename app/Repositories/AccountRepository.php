@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Contracts\AccountRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use App\Exceptions\ValidationException;
 use App\Models\Customer;
 use App\Models\Transaction;
 
@@ -82,7 +83,7 @@ class AccountRepository implements AccountRepositoryInterface
         }
 
         if ($customer->balance < $funds) {
-            throw new \Exception('Insufficient balance for withdrawal.');
+            throw new ValidationException("Insufficient balance for withdrawal.", 422);
         }
 
         $balanceBefore = $customer->balance;
