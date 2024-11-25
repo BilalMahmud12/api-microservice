@@ -3,26 +3,128 @@
 namespace App\Repositories;
 
 use App\Contracts\AccountRepositoryInterface;
+use App\Models\Customer;
+use App\Models\Transaction;
 
 class AccountRepository implements AccountRepositoryInterface
 {
-    public function getBalance(int $id)
+    public function exists(int $id): bool
     {
-        //
+        return Customer::find($id) ? true : false;
     }
 
-    public function deposit(int $id, int $funds)
+    public function getCustomerWithLock(int $id): ?Customer
     {
-        //
+        return Customer::lockForUpdate()->find($id);
     }
 
-    public function withdraw(int $id, int $funds)
+    public function getBalance(int $id): int
     {
-        //
+        $customer = Customer::find($id);
+
+        if (!$customer) {
+            throw new \Exception('Customer not found.');
+        }
+
+        return $customer->balance;
     }
 
-    public function transfer(array $data)
+    public function deposit(int $id, int $funds, bool $is_transfer = false): Customer
     {
-        //
+        $customer = $this->getCustomerWithLock($id);
+
+        if (!$customer) {
+            throw new \Exception('Customer not found.');
+        }
+
+        $balanceBefore = $customer->balance;
+        $balanceAfter = $customer->balance + $funds;
+        $customer->balance = $balanceAfter;
+
+        if (!$customer->save()) {
+            throw new \Exception('Failed to update customer balance.');
+        }
+
+        if ($customer->balance !== $balanceAfter) {
+            throw new \Exception('Failed to update customer balance.');
+        }
+
+        $transaction = $this->recordAccountTransaction(
+            $customer->id,
+            $is_transfer ? Transaction::TYPE_TRANSFER : Transaction::TYPE_DEPOSIT,
+            $funds,
+            $balanceBefore,
+            $balanceAfter
+        );
+
+        if (!$transaction) {
+            throw new \Exception('Failed to record deposit transaction.');
+        }
+
+        return $customer;
+    }
+
+    public function withdraw(int $id, int $funds): Customer
+    {
+        $customer = $this->getCustomerWithLock($id);
+
+        if (!$customer) {
+            throw new \Exception('Customer not found.');
+        }
+
+        if ($customer->balance < $funds) {
+            throw new \Exception('Insufficient balance for withdrawal.');
+        }
+
+        $balanceBefore = $customer->balance;
+        $balanceAfter = $customer->balance - $funds;
+        $customer->balance = $balanceAfter;
+
+        if (!$customer->save()) {
+            throw new \Exception('Failed to update customer balance.');
+        }
+
+        if ($customer->balance !== $balanceAfter) {
+            throw new \Exception('Failed to update customer balance.');
+        }
+
+        $transaction = $this->recordAccountTransaction(
+            $customer->id,
+            Transaction::TYPE_WITHDRAW,
+            $funds,
+            $balanceBefore,
+            $balanceAfter
+        );
+
+        if (!$transaction) {
+            throw new \Exception('Failed to record withdraw transaction.');
+        }
+
+        return $customer;
+    }
+
+    private function recordAccountTransaction(int $id, string $type, int $amount, int $balanceBefore, int $balanceAfter)
+    {
+        $transaction = new Transaction();
+        $transaction->customer_id = $id;
+        $transaction->type = $type;
+        $transaction->amount = $amount;
+        $transaction->balance_before = $balanceBefore;
+        $transaction->balance_after = $balanceAfter;
+
+        return $transaction->save() ? $transaction : false;
+    }
+
+    public function getTransactionsSum(int $id): float
+    {
+        return Transaction::where('customer_id', $id)
+            ->selectRaw("SUM( CASE WHEN type = ? THEN amount WHEN type = ? THEN -amount ELSE 0 END) as balance", [Transaction::TYPE_DEPOSIT, Transaction::TYPE_WITHDRAW])
+            ->value('balance');
+    }
+
+    public function updateCustomerBalance(Customer $customer, float $balance): bool
+    {
+        $customer->balance = $balance;
+        return $customer->save();
     }
 }
