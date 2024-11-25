@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Contracts\AccountRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use App\Models\Customer;
 use App\Models\Transaction;
 
@@ -16,6 +17,14 @@ class AccountRepository implements AccountRepositoryInterface
     public function getCustomerWithLock(int $id): ?Customer
     {
         return Customer::lockForUpdate()->find($id);
+    }
+
+    public function getAllCustomersWithLock(int $offset, int $limit): Collection
+    {
+        return Customer::lockForUpdate()
+            ->skip($offset)
+            ->take($limit)
+            ->get();
     }
 
     public function getBalance(int $id): int
@@ -117,9 +126,19 @@ class AccountRepository implements AccountRepositoryInterface
 
     public function getTransactionsSum(int $id): float
     {
-        return Transaction::where('customer_id', $id)
-            ->selectRaw("SUM( CASE WHEN type = ? THEN amount WHEN type = ? THEN -amount ELSE 0 END) as balance", [Transaction::TYPE_DEPOSIT, Transaction::TYPE_WITHDRAW])
-            ->value('balance');
+        $incomingSum = Transaction::where('customer_id', $id)
+            ->whereIn('type', [Transaction::TYPE_DEPOSIT, Transaction::TYPE_TRANSFER])
+            ->where('balance_after', '>', 'balance_before')
+            ->sum('amount');
+
+        $outgoingSum = Transaction::where('customer_id', $id)
+            ->whereIn('type', [Transaction::TYPE_WITHDRAW])
+            ->where('balance_before', '>', 'balance_after')
+            ->sum('amount');
+
+        $balance = $incomingSum - $outgoingSum;
+
+        return $balance;
     }
 
     public function updateCustomerBalance(Customer $customer, float $balance): bool

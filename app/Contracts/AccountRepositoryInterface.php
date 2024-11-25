@@ -3,12 +3,15 @@
 namespace App\Contracts;
 
 use App\Models\Customer;
+use Illuminate\Database\Eloquent\Collection;
 
 interface AccountRepositoryInterface
 {
     public function exists(int $id): bool;
 
     public function getCustomerWithLock(int $id): ?Customer;
+
+    public function getAllCustomersWithLock(int $offset, int $limit): Collection;
 
     public function getBalance(int $id): int;
 

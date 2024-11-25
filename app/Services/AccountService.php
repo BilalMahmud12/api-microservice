@@ -122,7 +122,7 @@ class AccountService
         }
     }
 
-    public function rebuildCustomerAccountBalance(int $id)
+    public function auditAccountBalance(int $id)
     {
         DB::beginTransaction();
 
@@ -148,5 +148,47 @@ class AccountService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function auditAllAccounts(int $batchSize = 100): array
+    {
+        $offset = 0;
+        $auditResults = [];
+
+        while (true) {
+            DB::beginTransaction();
+            try {
+                $customers = $this->accountRepository->getAllCustomersWithLock($offset, $batchSize);
+
+                if ($customers->isEmpty()) {
+                    DB::commit();
+                    break;
+                }
+
+                foreach ($customers as $customer) {
+                    try {
+                        $balance = $this->auditAccountBalance($customer->id);
+                        $auditResults[$customer->id] = [
+                            'status' => 'success',
+                            'balance' => $balance,
+                        ];
+                    } catch (\Exception $e) {
+                        $auditResults[$customer->id] = [
+                            'status' => 'failed',
+                            'error' => $e->getMessage(),
+                        ];
+                    }
+                }
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+
+            $offset += $batchSize;
+        }
+
+        return $auditResults;
     }
 }
