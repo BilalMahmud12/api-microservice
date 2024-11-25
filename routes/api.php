@@ -2,10 +2,10 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\CheckApiToken;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AuditController;
-
 
 Route::group(['prefix' => 'v1'], function () {
 
@@ -32,4 +32,4 @@ Route::group(['prefix' => 'v1'], function () {
         Route::post('/audit/{id}', 'auditSingleAccount');
     });
 
-});
+})->middleware(CheckApiToken::class);
